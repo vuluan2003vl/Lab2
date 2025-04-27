@@ -10,6 +10,7 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
+import { Audio } from 'expo-av'; // Import Audio từ expo-av
 
 const CalcButton = ({ label, onPress }) => {
   return (
@@ -38,8 +39,27 @@ export default function App() {
     ['^', '%', '=', ''],
   ];
 
-  const handlePress = (value) => {
-    if (value === 'CLEAR') {
+  // Hàm phát âm thanh
+  const playSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('./assets/click.mp3') // File âm thanh click
+      );
+      await sound.playAsync();
+      // Giải phóng bộ nhớ sau khi phát xong
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.log('Error playing sound:', error);
+    }
+  };
+
+  const handlePress = async (value) => {
+    await playSound(); // Phát âm thanh mỗi lần nhấn nút
+    if (value === 'CLEAR' || value === 'C') {
       setExpression('');
       setResult('');
     } else if (value === 'DEL') {
@@ -51,7 +71,7 @@ export default function App() {
         const evalResult = eval(expr);
         setResult(evalResult.toString());
         setHistory([{ expr: expression, result: evalResult.toString() }, ...history]);
-        setExpression(''); // Clear expression sau khi tính
+        setExpression('');
       } catch {
         setResult('Error');
       }
