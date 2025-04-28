@@ -6,18 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  FlatList,
   ScrollView,
-  Switch,
 } from 'react-native';
-import { Audio } from 'expo-av'; // Import Audio từ expo-av
+import { Audio } from 'expo-av';
+import { Entypo } from '@expo/vector-icons'; // Thư viện icon Entypo
 
 const CalcButton = ({ label, onPress }) => {
   return (
-    <TouchableOpacity
-      style={styles.button}
-      onPress={() => onPress(label)}
-    >
+    <TouchableOpacity style={styles.button} onPress={() => onPress(label)}>
       <Text style={styles.buttonText}>{label}</Text>
     </TouchableOpacity>
   );
@@ -26,6 +22,7 @@ const CalcButton = ({ label, onPress }) => {
 export default function App() {
   const colorScheme = useColorScheme();
   const [isDark, setIsDark] = useState(colorScheme === 'dark');
+  const [backgroundColor, setBackgroundColor] = useState(isDark ? '#000' : '#fff');
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
   const [history, setHistory] = useState([]);
@@ -39,14 +36,12 @@ export default function App() {
     ['^', '%', '=', ''],
   ];
 
-  // Hàm phát âm thanh
   const playSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('./assets/click.mp3') // File âm thanh click
+        require('./assets/click.mp3')
       );
       await sound.playAsync();
-      // Giải phóng bộ nhớ sau khi phát xong
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
           sound.unloadAsync();
@@ -58,7 +53,7 @@ export default function App() {
   };
 
   const handlePress = async (value) => {
-    await playSound(); // Phát âm thanh mỗi lần nhấn nút
+    await playSound();
     if (value === 'CLEAR' || value === 'C') {
       setExpression('');
       setResult('');
@@ -99,15 +94,31 @@ export default function App() {
     }
   };
 
+  const toggleTheme = () => {
+    if (isDark) {
+      setBackgroundColor('#ffffff'); // Chuyển về sáng
+      setIsDark(false);
+    } else {
+      setBackgroundColor('#000000'); // Chuyển về tối
+      setIsDark(true);
+    }
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      {/* Top Bar đổi theme */}
       <View style={styles.topBar}>
-        <Switch value={isDark} onValueChange={setIsDark} />
+        <TouchableOpacity onPress={toggleTheme}>
+          {isDark ? (
+            <Entypo name="light-up" size={28} color="#f5c518" style={styles.iconStyle} />
+          ) : (
+            <Entypo name="moon" size={28} color="#999" style={styles.iconStyle} />
+          )}
+        </TouchableOpacity>
       </View>
 
-      {/* Khu vực hiển thị History + Expression */}
+      {/* Hiển thị lịch sử và biểu thức */}
       <View style={styles.topArea}>
-        {/* Lịch sử phép tính */}
         <ScrollView style={styles.historyContainer}>
           {history.map((item, index) => (
             <Text key={index} style={[styles.historyText, { color: isDark ? '#aaa' : '#555' }]}>
@@ -116,7 +127,6 @@ export default function App() {
           ))}
         </ScrollView>
 
-        {/* Biểu thức và kết quả hiện tại */}
         <View style={styles.expressionContainer}>
           <Text numberOfLines={1} style={[styles.expressionText, { color: isDark ? '#fff' : '#000' }]}>
             {expression || '0'}
@@ -129,7 +139,7 @@ export default function App() {
         </View>
       </View>
 
-      {/* Khu vực các nút bấm */}
+      {/* Các nút bấm */}
       <View style={styles.buttonsContainer}>
         {buttons.map((row, rowIndex) => (
           <View style={styles.buttonRow} key={rowIndex}>
@@ -155,6 +165,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 100,
     alignItems: 'flex-end',
+    
   },
   historyContainer: {
     flex: 1,
@@ -190,4 +201,7 @@ const styles = StyleSheet.create({
     height: 60,
   },
   buttonText: { fontSize: 22, fontWeight: 'bold', color: '#333' },
+  iconStyle: {
+    marginHorizontal: 8,
+  },
 });
